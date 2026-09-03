@@ -31,6 +31,8 @@ typedef QMap<QDBusObjectPath, InterfaceList> ManagedObjectList;
 Q_DECLARE_METATYPE(InterfaceList)
 Q_DECLARE_METATYPE(ManagedObjectList)
 
+class UartService;
+
 class Application : public QObject
 {
     Q_OBJECT
@@ -40,10 +42,12 @@ public:
     Application(QDBusConnection bus = QDBusConnection::systemBus(), QObject *parent = 0);
     QDBusObjectPath getPath();
     void addService(Service *service);
+    UartService *uartService() { return m_uartService; }
 
 private:
     QString mPath;
     QList<Service *> mServices;
+    UartService *m_uartService = nullptr;
 
 public slots:
     ManagedObjectList GetManagedObjects();

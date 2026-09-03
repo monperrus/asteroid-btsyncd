@@ -27,6 +27,7 @@
 #include <QTimer>
 
 #include "common.h"
+#include "uartsession.h"
 
 BlueZManager::BlueZManager(QDBusObjectPath appPath, QDBusObjectPath advertPath, QObject *parent)
     : QObject(parent), mAppPath(appPath), mAdvertPath(advertPath), mAdapter("adapter"), mBus(QDBusConnection::systemBus())
@@ -197,11 +198,16 @@ void BlueZManager::onConnectedChanged()
     appName = "";
 
     if(mConnected) {
+        // nothing BLE-UART specific on connect; sessions start on first RX
         //% "Connected"
         summary = qtTrId("id-connected");
         body = mConnectedDevice;
         appIcon = "ios-bluetooth-outline";
     } else {
+        // A BLE UART session cannot outlive its link: end it now so the
+        // shell's process group is torn down, not just unreachable.
+        if (mUartSession && mUartSession->state() != UartSession::Disabled)
+            mUartSession->disarm();
         mAncs.disconnect();
         mCts.disconnect();
         //% "Disconnected"

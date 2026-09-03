@@ -22,6 +22,7 @@
 #include "batteryservice.h"
 #include "screenshotservice.h"
 #include "timeservice.h"
+#include "uartservice.h"
 
 #include <QDBusMetaType>
 
@@ -35,6 +36,11 @@ Application::Application(QDBusConnection bus, QObject *parent) : QObject(parent)
     addService(new BatteryService(3, bus));
     addService(new ScreenshotService(4, bus));
     addService(new TimeService(5, bus));
+    // Registered even while disabled: BlueZ snapshots the object tree at
+    // RegisterApplication time and ignores later InterfacesAdded. The arm
+    // state gates sessions, not GATT presence (plan-uart.md).
+    m_uartService = new UartService(6, bus);
+    addService(m_uartService);
 
     qDBusRegisterMetaType<InterfaceList>();
     qDBusRegisterMetaType<ManagedObjectList>();

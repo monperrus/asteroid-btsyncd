@@ -23,8 +23,10 @@
 
 #include "common.h"
 #include "application.h"
+#include "uartcontrol.h"
 #include "advertisement.h"
 #include "bluezmanager.h"
+#include "uartservice.h"
 
 int main(int argc, char **argv)
 {
@@ -51,6 +53,8 @@ int main(int argc, char **argv)
     Application app;
     Advertisement advert;
     BlueZManager bm(app.getPath(), advert.getPath());
+    bm.setUartSession(app.uartService()->session());
+    UartControl uartControl(app.uartService()->session());
 
     qcoreapp.exec();
     return 0;

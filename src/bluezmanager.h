@@ -28,11 +28,14 @@
 
 typedef QMap<QString, QMap<QString, QVariant>> InterfaceList;
 
+class UartSession;
+
 class BlueZManager : public QObject
 {
     Q_OBJECT
 public:
     explicit BlueZManager(QDBusObjectPath appPath, QDBusObjectPath advertPath, QObject *parent = 0);
+    void setUartSession(UartSession *session) { mUartSession = session; }
     void updateConnected();
 
 private:
@@ -43,6 +46,7 @@ private:
     QDBusConnection mBus;
     ANCS mAncs;
     CTS mCts;
+    UartSession *mUartSession = nullptr;
 
     void updateAdapter();
     void setAdapter(QString adatper);

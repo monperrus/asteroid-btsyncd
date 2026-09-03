@@ -18,6 +18,9 @@ set(
 	ancs.cpp
 	ancs_notification.cpp
 	cts.cpp
+	uartservice.cpp
+	uartsession.cpp
+	uartcontrol.cpp
 )
 set(
 	HEADERS
@@ -40,6 +43,9 @@ set(
 	ancs.h
 	ancs_notification.h
 	cts.h
+	uartservice.h
+	uartsession.h
+	uartcontrol.h
 )
 
 add_executable(asteroid-btsyncd ${SRC} ${HEADERS})

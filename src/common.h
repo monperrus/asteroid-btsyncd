@@ -74,4 +74,14 @@
 #define TIME_UUID         "00005071-0000-0000-0000-00A57E401D05"
 #define TIME_SET_UUID     "00005001-0000-0000-0000-00A57E401D05"
 
+/* Nordic UART Service (NUS) */
+#define NUS_UUID          "6e400001-b5a3-f393-e0a9-e50e24dcca9e"
+#define NUS_RX_UUID       "6e400002-b5a3-f393-e0a9-e50e24dcca9e"
+#define NUS_TX_UUID       "6e400003-b5a3-f393-e0a9-e50e24dcca9e"
+
+/* BLE UART control interface (session bus) */
+#define UART_CONTROL_SERVICE_NAME "org.asteroidos.btsyncd"
+#define UART_CONTROL_PATH         "/org/asteroidos/btsyncd/uart"
+#define UART_CONTROL_IFACE        "org.asteroidos.BleUart1"
+
 #endif // COMMON_H
