@@ -55,7 +55,7 @@ public:
     bool getNotifying();
 
 protected:
-    // Server-side notification support (plan-uart.md Phase 1).
+    // Server-side notification support.
     //
     // updateValue() stores the new characteristic value and emits
     // org.freedesktop.DBus.Properties.PropertiesChanged for

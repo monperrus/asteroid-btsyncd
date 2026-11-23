@@ -9,6 +9,8 @@ set(
 	screenshotservice.cpp
 	settime.cpp
 	timeservice.cpp
+	fts_engine.cpp
+	filetransferservice.cpp
 	service.cpp
 	characteristic.cpp
 	descriptor.cpp
@@ -32,6 +34,8 @@ set(
 	screenshotservice.h
 	settime.h
 	timeservice.h
+	fts_engine.h
+	filetransferservice.h
 	service.h
 	characteristic.h
 	descriptor.h
