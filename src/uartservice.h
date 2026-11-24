@@ -116,8 +116,11 @@ private:
     int m_masterFd = -1;
     pid_t m_childPid = -1;
     QSocketNotifier *m_ptyNotifier = nullptr;
+    // Stopped shells still being reaped. They no longer own the PTY or the
+    // session, so a new session can start its own shell at once.
+    struct DyingShell { pid_t pid; int stage; };
+    QList<DyingShell> m_dying;
     QTimer m_reapTimer;
-    int m_reapStage = 0;
 
     QQueue<QByteArray> m_txQueue;
     int m_txQueuedBytes = 0;

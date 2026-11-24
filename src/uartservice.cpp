@@ -267,49 +267,48 @@ void UartService::stopShell(const char *reason)
     qInfo() << "BLE UART: stopping shell (" << reason << ")";
 
     // Never sleep or block in btsyncd's event loop: it owns all of the
-    // watch's GATT services. Reap/escalate asynchronously instead.
+    // watch's GATT services. Reap/escalate asynchronously instead. The shell
+    // is detached right away: a peer that starts a session before the reap
+    // (a client reconnecting on a link another program keeps up) gets a new
+    // shell instead of this dying one.
     kill(-m_childPid, SIGHUP);
-    m_reapStage = 0;
-    m_reapTimer.start(1000);
-}
-
-void UartService::reapShell()
-{
-    if (m_childPid <= 0)
-        return;
-
-    int status;
-    const pid_t result = waitpid(m_childPid, &status, WNOHANG);
-    if (result == 0) {
-        if (m_reapStage == 0) {
-            qWarning() << "BLE UART: shell ignored SIGHUP; sending SIGTERM";
-            kill(-m_childPid, SIGTERM);
-            m_reapStage = 1;
-            m_reapTimer.start(500);
-            return;
-        }
-        if (m_reapStage == 1) {
-            qWarning() << "BLE UART: shell ignored SIGTERM; sending SIGKILL";
-            kill(-m_childPid, SIGKILL);
-            m_reapStage = 2;
-        }
-        m_reapTimer.start(100);
-        return;
-    }
-
-    if (result < 0 && errno != ECHILD && errno != EINTR) {
-        qWarning() << "BLE UART: waitpid failed:" << strerror(errno);
-        m_reapTimer.start(100);
-        return;
-    }
-
-    qInfo() << "BLE UART: shell reaped (pid" << m_childPid << ")";
-
     if (m_masterFd >= 0) {
         close(m_masterFd);
         m_masterFd = -1;
     }
+    m_dying.append({m_childPid, 0});
     m_childPid = -1;
+    if (!m_reapTimer.isActive())
+        m_reapTimer.start(1000);
+}
+
+void UartService::reapShell()
+{
+    bool escalating = false;
+    for (auto it = m_dying.begin(); it != m_dying.end();) {
+        int status;
+        const pid_t result = waitpid(it->pid, &status, WNOHANG);
+        if (result == it->pid || (result < 0 && errno == ECHILD)) {
+            qInfo() << "BLE UART: shell reaped (pid" << it->pid << ")";
+            it = m_dying.erase(it);
+            continue;
+        }
+        if (result < 0 && errno != EINTR) {
+            qWarning() << "BLE UART: waitpid failed:" << strerror(errno);
+        } else if (result == 0 && it->stage == 0) {
+            qWarning() << "BLE UART: shell ignored SIGHUP; sending SIGTERM";
+            kill(-it->pid, SIGTERM);
+            it->stage = 1;
+            escalating = true;
+        } else if (result == 0 && it->stage == 1) {
+            qWarning() << "BLE UART: shell ignored SIGTERM; sending SIGKILL";
+            kill(-it->pid, SIGKILL);
+            it->stage = 2;
+        }
+        ++it;
+    }
+    if (!m_dying.isEmpty())
+        m_reapTimer.start(escalating ? 500 : 100);
 }
 
 void UartService::onPtyReadable()
@@ -325,6 +324,12 @@ void UartService::onPtyReadable()
                 continue;
             if (errno == EAGAIN)
                 break;
+            if (errno == EIO) {
+                // Linux reports a PTY whose shell exited (`exit`) as EIO, not
+                // EOF; the notifier would otherwise fire again at once.
+                m_session.endPeer();
+                return;
+            }
             qWarning() << "BLE UART: PTY read failed:" << strerror(errno);
             break;
         }
